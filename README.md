@@ -1,7 +1,10 @@
-launch locust:
-in root :
-python3 locustfile.py
+## Usage
 
-launch lb :
-in /lb:
-python3 lb.py
+```cd locust-pt/lb/ ```<br>
+```docker build --tag lb .```<br>
+```cd ../``` <br>
+```docker-compose up```<br>
+in other terminal window: <br>
+```cd locust-pt/```<br>
+```locust```
+
