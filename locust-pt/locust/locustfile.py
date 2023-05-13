@@ -10,16 +10,21 @@ from rsocket_user import RsocketUser
 
 gevent.monkey.patch_all()
 from rsocket.load_balancer.load_balancer_rsocket import LoadBalancerRSocket
-
+from gevent.pool import Pool
+from gevent.pool import Group
 from rsocket_user import ConnectionServerWrapper
+import asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 def asyncio_if_event_loop(call, *args):
     try:
         loop = asyncio.get_event_loop()
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
         future_response = asyncio.run_coroutine_threadsafe(call(*args), loop)
 
         logging.info(f"---{call.__name__}--- is running in event loop")
 
-    except RuntimeError:
+    except:
         future_response = asyncio.run(call(*args))
         logging.info(f"---{call.__name__}--- not running in event loop")
     return future_response
@@ -31,6 +36,7 @@ class ResponseRsocketUser(RsocketUser):
         super().__init__(environment)
     @task
     def getResponse(self):
+        # def x():
         logging.info("RequestResponse task started")
         call = self.request_response
         future_response = asyncio_if_event_loop(call, 6565)
@@ -52,6 +58,15 @@ class ResponseRsocketUser(RsocketUser):
             response_time=response_time,
             response_length=response_length,
         ) 
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        # scheduler = AsyncIOScheduler()
+
+        # scheduler.add_job(x, "interval", seconds=3, max_instances=10)
+
+        # scheduler.start()
+        # asyncio.get_event_loop().run_forever()
+
 
 if __name__ == "__main__":
     # run_rsocket_server()

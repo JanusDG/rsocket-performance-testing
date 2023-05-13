@@ -2,9 +2,9 @@
 
 set -m
   
-python3 launch_lb.py &
+python3 lb/launch_lb.py &
   
-cd servers
+cd lb/servers
 python3 launch_lb_servers.py
 cd ../
 

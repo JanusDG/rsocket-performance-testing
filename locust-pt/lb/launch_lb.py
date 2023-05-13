@@ -17,61 +17,80 @@ from rsocket.rsocket_server import RSocketServer
 from rsocket.load_balancer.load_balancer_rsocket import LoadBalancerRSocket
 
 from rsocket.transports.tcp import TransportTCP
-from chat_client import ChatClient
 from rsocket.helpers import create_future, noop
 from typing import Type, Callable
 import time 
-class IdentifiedHandler(BaseRequestHandler):
-    def __init__(self, server_count: int,stack,round_robin, delay=timedelta(0)):
-        self._delay = delay
-        self._server_count = server_count
-        self.stack = stack
-        self.round_robin = round_robin
+from typing import Optional
 
-class Handler(IdentifiedHandler):
-    async def request_response(self, payload: Payload) -> Awaitable[Payload]:
-        logging.info("server recieved request")
-        username = utf8_decode(payload.data)
-        return create_future(Payload(ensure_bytes(f'server {self._server_count} recevied {username}')))
+from collections import deque
+
+import os
+import random
+
+from strategies.weighted_round_robin import LoadBalancerWeightenedRoundRobin
+from strategies.dynamic_weighted_round_robin import LoadBalancerDynamicWeightenedRoundRobin
+
+load_balancing_strategy = LoadBalancerDynamicWeightenedRoundRobin
+
+class ChatClient:
+    def __init__(self, rsocket: RSocketClient):
+        self._rsocket = rsocket
+        self._latancy_stack = deque(maxlen=3)
+        self._connection_count = 0
+
+    async def request_response(self, request_payload: Payload):
+        self._connection_count += 1
+        response = await self._rsocket.request_response(request_payload)
+        request_time = utf8_decode(response.metadata)
+        logging.info(f"{request_time}")
+        self._latancy_stack.append(int(request_time))
+        self._connection_count -= 1
+        return response
+
+    def connection_count(self):
+        return self._connection_count
+
+    def avarage_server_latency(self):
+        return sum(self._latancy_stack)/len(self._latancy_stack)
 
 
-class LoadBalancerHandler(IdentifiedHandler):
-    def __init__(self, server_count, stack,round_robin, delay=timedelta(0)):
+class LoadBalancerHandler(BaseRequestHandler):
+    def __init__(self, server_count, stack, lb_strategy, delay=timedelta(0)):
         self._delay = delay
         self.stack = stack
         self.lb = None
         self.server_count = server_count
-        self.round_robin = round_robin
+        self.lb_strategy = lb_strategy
     
 
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
         logging.info("server recieved request")
-        response = await LoadBalancerRSocket(self.round_robin).request_response(payload)
+        response = await LoadBalancerRSocket(self.lb_strategy).request_response(payload)
         logging.info(f"response: {utf8_decode(response.data)}")
         return create_future(Payload(ensure_bytes(f'{utf8_decode(response.data)}')))
 
-async def create_round_robin(server_count, stack):
-    
+async def create_lb_strategy(server_count, stack, host):
     clients = []
     for i in range(server_count):
         try:
-            connection = await asyncio.open_connection("0.0.0.0", 6566 + i)
+            connection = await asyncio.open_connection(host, 6566 + i)
         except ConnectionError:
             reconnect_time = 1
             logging.info(f"Unable to connect to client, reconnection in {reconnect_time} second(s)")
             time.sleep(reconnect_time)
             continue
-        client = await stack.enter_async_context(RSocketClient(single_transport_provider(TransportTCP(*connection))))
-        client = ChatClient(client)
+        cl = await stack.enter_async_context(RSocketClient(single_transport_provider(TransportTCP(*connection))))
+        client = ChatClient(cl)
         clients.append(client)
-    round_robin = LoadBalancerRoundRobin(clients)
-    return round_robin
+    # lb_strategy = load_balancing_strategy(pool=clients,weights=[random.randint(2,3)for i in range(len(clients))])
+    lb_strategy = load_balancing_strategy(pool=clients)
+    return lb_strategy
 
 class HandlerFactory:
     def __init__(self,
                  server_count: int,
                  
-                 round_robin:LoadBalancerRoundRobin,
+                 lb_strategy:load_balancing_strategy,
                  stack:AsyncExitStack,
 
                  handler_factory: Type[LoadBalancerHandler],
@@ -84,25 +103,27 @@ class HandlerFactory:
         self._handler_factory = handler_factory
 
         self.stack = stack
-        self.round_robin = round_robin
+        self.lb_strategy = lb_strategy
 
     def factory(self) -> BaseRequestHandler:
-        handler = self._handler_factory(self._server_count, self.round_robin,self.stack,self._delay)
+        handler = self._handler_factory(self._server_count, self.lb_strategy,self.stack,self._delay)
         self._on_handler_create(handler)
         logging.info(f"handler")
         return handler
 
-async def run_server(server_count):
+async def run_server(server_count, host):
     stack = AsyncExitStack()
-    round_robin = await create_round_robin(server_count, stack)
+    lb_strategy = await create_lb_strategy(server_count, stack, host)
     def session(*connection):
-        RSocketServer(TransportTCP(*connection), handler_factory=HandlerFactory(server_count, stack,round_robin, LoadBalancerHandler).factory)
+        RSocketServer(TransportTCP(*connection), handler_factory=HandlerFactory(server_count, stack,lb_strategy, LoadBalancerHandler).factory)
 
-    async with await asyncio.start_server(session, '0.0.0.0', 6565) as server:
+    async with await asyncio.start_server(session, host, 6565) as server:
         logging.info(f"Server started")
         await server.serve_forever()
     await stack.aclose()
 
 if __name__ == "__main__":
-    asyncio.run(run_server(5))
+    host = os.environ['HOST']
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(run_server(5, host))
 

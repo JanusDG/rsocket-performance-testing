@@ -1,0 +1,22 @@
+version: '3'
+
+networks:
+  lb-network:
+    name: lb-network
+
+services:
+  lb:
+    image: lb
+    environment:
+      - HOST=0.0.0.0
+    build: 
+      context: .
+      dockerfile: lb/Dockerfile
+      # target: lb/lb
+    ports:
+      - "6565:6565"
+    expose:
+      - 6565
+    networks:
+      - lb-network
+

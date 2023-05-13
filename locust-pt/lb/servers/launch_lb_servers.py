@@ -12,16 +12,24 @@ from rsocket.helpers import create_future, noop
 from typing import Type, Callable
 from datetime import timedelta
 
-class IdentifiedHandler(BaseRequestHandler):
+import time
+import random
+
+import os 
+
+class Handler(BaseRequestHandler):
     def __init__(self, server_id: int, delay=timedelta(0)):
         self._delay = delay
         self._server_id = server_id
-
-class Handler(IdentifiedHandler):
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
+        start_time = time.monotonic()
         logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request")
-        username = utf8_decode(payload.data)
-        return create_future(Payload(ensure_bytes(f'server {self._server_id} recevied {username}')))
+        time.sleep(random.randint(1,3000)/1000)
+        message = utf8_decode(payload.data)
+        response_time = int((time.monotonic() - start_time) * 1000)
+
+        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} recevied {message}'),
+                                     metadata=ensure_bytes(str(response_time))))
 
 
 class HandlerFactory:
@@ -41,18 +49,19 @@ class HandlerFactory:
         logging.info(f"handler")
         return handler
 
-async def run_server(port):
+async def run_server(host, port):
     def session(*connection):
         RSocketServer(TransportTCP(*connection),handler_factory=HandlerFactory(port-6566, Handler).factory) 
 
-    async with await asyncio.start_server(session, '0.0.0.0', port) as server:
+    async with await asyncio.start_server(session, host, port) as server:
         logging.info(port)
         await server.serve_forever()
 
 async def run_all(server_count):
     tasks = []
+    host = os.environ['HOST']
     for i in range(server_count):
-        tasks.append(run_server(6566+i))
+        tasks.append(run_server(host, 6566+i))
     await asyncio.gather(*tasks)
 
 

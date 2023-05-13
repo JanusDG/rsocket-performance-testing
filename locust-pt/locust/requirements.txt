@@ -1,0 +1,5 @@
+APScheduler==3.10.1
+gevent==22.10.2
+# locustio==0.999
+rsocket==0.4.9
+locust==2.15.1

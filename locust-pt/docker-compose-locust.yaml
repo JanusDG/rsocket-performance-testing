@@ -1,0 +1,46 @@
+version: '3'
+
+networks:
+  locust-network:
+    name: locust-network
+  lb-network:
+    name: lb-network
+    external: true
+
+services:
+  master:
+    image: locust
+    build: 
+      context: .
+      dockerfile: locust/Dockerfile
+    ports:
+     - "8089:8089"
+    #  - "6565:6565"
+    external_links:
+      - lb:lb
+    volumes:
+      - ./:/mnt/locust
+    networks:
+      - locust-network
+      - lb-network
+    command: -f /mnt/locust/locust/locustfile.py --master -H http://0.0.0.0:8089 --master-bind-host=0.0.0.0 --master-bind-port=5557
+  
+  worker:
+    image: locust
+    build: 
+      context: .
+      dockerfile: locust/Dockerfile
+    volumes:
+      - ./:/mnt/locust
+    # ports:
+    #   - "5557:5557"
+    external_links:
+      - lb:lb
+    links:
+      - master:master
+    networks:
+      - locust-network
+      - lb-network
+    command: -f /mnt/locust/locust/locustfile.py --worker --master-host=master
+    depends_on:
+      - "master"
