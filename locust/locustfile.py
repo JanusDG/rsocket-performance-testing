@@ -14,7 +14,7 @@ from gevent.pool import Pool
 from gevent.pool import Group
 from rsocket_user import ConnectionServerWrapper
 import asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# from apscheduler.schedulers.asyncio import AsyncIOScheduler
 def asyncio_if_event_loop(call, *args):
     try:
         loop = asyncio.get_event_loop()
@@ -22,11 +22,11 @@ def asyncio_if_event_loop(call, *args):
         # asyncio.set_event_loop(loop)
         future_response = asyncio.run_coroutine_threadsafe(call(*args), loop)
 
-        logging.info(f"---{call.__name__}--- is running in event loop")
+        # logging.info(f"---{call.__name__}--- is running in event loop")
 
     except:
         future_response = asyncio.run(call(*args))
-        logging.info(f"---{call.__name__}--- not running in event loop")
+        # logging.info(f"---{call.__name__}--- not running in event loop")
     return future_response
 
 
@@ -34,10 +34,10 @@ class ResponseRsocketUser(RsocketUser):
     wait_time = between(1,5)
     def __init__(self, environment):
         super().__init__(environment)
+        logging.basicConfig(level=logging.INFO)
     @task
     def getResponse(self):
         # def x():
-        logging.info("RequestResponse task started")
         call = self.request_response
         future_response = asyncio_if_event_loop(call, 6565)
 

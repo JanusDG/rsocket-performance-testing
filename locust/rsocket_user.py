@@ -34,6 +34,7 @@ class RsocketUser(User):
 
     def __init__(self, environment):
         super().__init__(environment)
+        logging.basicConfig(level=logging.INFO)
     
     async def request_response(self, port):
         while True:
@@ -48,9 +49,11 @@ class RsocketUser(User):
         start_time = time.monotonic()
 
         async with RSocketClient(single_transport_provider(TransportTCP(*connection))) as client:
-            response = await client.request_response(Payload(ensure_bytes(f'request_response {random.randint(1,10**8)}')))
+            message = random.randint(1,10**8)
+            logging.info(f"sending req_resp {message}")
+            response = await client.request_response(Payload(ensure_bytes(f'req_resp {message}')))
             response_time = int((time.monotonic() - start_time) * 1000)
-            logging.info(f"Server response: {utf8_decode(response.data)}")
-            logging.info(f"Response metadata: {utf8_decode(response.metadata)}")
+            logging.info(f"LB response: {utf8_decode(response.data)}")
+            # logging.info(f"Response metadata: {utf8_decode(response.metadata)}")
             
             return response, response_time

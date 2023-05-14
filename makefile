@@ -16,6 +16,6 @@ locust-up:
 	sudo docker-compose -f docker-compose-locust.yaml up --scale worker=$(WORKERS_DEFAULT)
 
 locust-build:
-	sudo docker-compose -f docker-compose-lb.yaml build --scale worker=$(WORKERS_DEFAULT)
+	sudo docker-compose -f docker-compose-lb.yaml build
 
 locust-all: locust-build locust-up

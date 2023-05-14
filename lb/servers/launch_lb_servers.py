@@ -23,12 +23,14 @@ class Handler(BaseRequestHandler):
         self._server_id = server_id
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
         start_time = time.monotonic()
-        logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request")
-        time.sleep(random.randint(1,3000)/1000)
         message = utf8_decode(payload.data)
-        response_time = int((time.monotonic() - start_time) * 1000)
+        logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request {message}")
+        
+        # simulate work
+        time.sleep(random.randint(1,3000)/1000)
 
-        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} recevied {message}'),
+        response_time = int((time.monotonic() - start_time) * 1000)
+        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} (:{self._server_id+6566}) processed {message}'),
                                      metadata=ensure_bytes(str(response_time))))
 
 
@@ -46,7 +48,6 @@ class HandlerFactory:
     def factory(self) -> BaseRequestHandler:
         handler = self._handler_factory(self._server_id, self._delay)
         self._on_handler_create(handler)
-        logging.info(f"handler")
         return handler
 
 async def run_server(host, port):
@@ -54,7 +55,7 @@ async def run_server(host, port):
         RSocketServer(TransportTCP(*connection),handler_factory=HandlerFactory(port-6566, Handler).factory) 
 
     async with await asyncio.start_server(session, host, port) as server:
-        logging.info(port)
+        logging.info(f"started server on port {port}")
         await server.serve_forever()
 
 async def run_all(server_count):
