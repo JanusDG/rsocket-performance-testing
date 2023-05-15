@@ -13,6 +13,7 @@ from rsocket.rsocket_client import RSocketClient
 
 from rsocket.helpers import single_transport_provider
 from rsocket.load_balancer.round_robin import LoadBalancerRoundRobin
+from rsocket.load_balancer.random_client import LoadBalancerRandom
 from rsocket.rsocket_server import RSocketServer
 from rsocket.load_balancer.load_balancer_rsocket import LoadBalancerRSocket
 
@@ -26,11 +27,25 @@ from collections import deque
 
 import os
 import random
+import argparse, sys
 
 from strategies.weighted_round_robin import LoadBalancerWeightenedRoundRobin
 from strategies.dynamic_weighted_round_robin import LoadBalancerDynamicWeightenedRoundRobin
+from strategies.least_connections import LoadBalancerLeastConections
 
-load_balancing_strategy = LoadBalancerRoundRobin
+
+parser=argparse.ArgumentParser()
+parser.add_argument("--strategy")
+args=parser.parse_args()
+
+strategies = {
+    "r":LoadBalancerRandom,
+    "rr":LoadBalancerRoundRobin,
+    "wrr":LoadBalancerWeightenedRoundRobin,
+    "dwrr":LoadBalancerDynamicWeightenedRoundRobin,
+    "lc":LoadBalancerLeastConections,
+}
+strategy = strategies[args.strategy]
 
 class ChatClient:
     def __init__(self, rsocket: RSocketClient):
@@ -81,14 +96,14 @@ async def create_lb_strategy(server_count, stack, host):
         cl = await stack.enter_async_context(RSocketClient(single_transport_provider(TransportTCP(*connection))))
         client = ChatClient(cl)
         clients.append(client)
-    # lb_strategy = load_balancing_strategy(pool=clients,weights=[random.randint(2,3)for i in range(len(clients))])
-    lb_strategy = load_balancing_strategy(pool=clients)
+    # lb_strategy = strategy(pool=clients,weights=[random.randint(2,3)for i in range(len(clients))])
+    lb_strategy = strategy(pool=clients)
     return lb_strategy
 
 class HandlerFactory:
     def __init__(self,
                  server_count: int,
-                 lb_strategy:load_balancing_strategy,
+                 lb_strategy:strategy,
                  stack:AsyncExitStack,
                  handler_factory: Type[LoadBalancerHandler],
                  delay=timedelta(0),
@@ -114,7 +129,7 @@ async def run_lb(server_count, host,port):
         RSocketServer(TransportTCP(*connection), handler_factory=HandlerFactory(server_count, stack,lb_strategy, LoadBalancerHandler).factory)
 
     async with await asyncio.start_server(session, host, port) as server:
-        logging.info(f"Started load balancer on port {port}")
+        logging.info(f"Started ({args.strategy})load balancer on port {port}")
         await server.serve_forever()
     await stack.aclose()
 

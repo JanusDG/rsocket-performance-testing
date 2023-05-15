@@ -9,6 +9,7 @@ services:
     image: lb
     environment:
       - HOST=0.0.0.0
+      - STRATEGY=lc
     build: 
       context: .
       dockerfile: lb/Dockerfile
