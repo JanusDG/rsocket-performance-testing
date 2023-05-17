@@ -23,7 +23,14 @@ services:
     networks:
       - locust-network
       - lb-network
-    command: -f /mnt/locust/locust/locustfile.py --master -H http://0.0.0.0:8089 --master-bind-host=0.0.0.0 --master-bind-port=5557
+    command: >
+      -f /mnt/locust/locust/locustfile.py
+      --master -H http://0.0.0.0:8089
+      --master-bind-host=0.0.0.0
+      --master-bind-port=5557
+      -u 6
+      -r 2
+    # --autostart
   
   worker:
     image: locust
@@ -41,6 +48,9 @@ services:
     networks:
       - locust-network
       - lb-network
-    command: -f /mnt/locust/locust/locustfile.py --worker --master-host=master
+    command: >
+      -f /mnt/locust/locust/locustfile.py
+      --worker
+      --master-host=master
     depends_on:
       - "master"

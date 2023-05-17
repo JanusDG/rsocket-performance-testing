@@ -5,6 +5,7 @@ from rsocket.load_balancer.load_balancer_strategy import LoadBalancerStrategy
 from rsocket.rsocket import RSocket
 
 import copy
+# Weighted
 class LoadBalancerWeightenedRoundRobin(LoadBalancerStrategy):
     def __init__(self,
                  pool: List[RSocket], 
