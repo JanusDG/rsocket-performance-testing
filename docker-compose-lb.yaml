@@ -8,8 +8,9 @@ services:
   lb:
     image: lb
     environment:
-      - HOST=0.0.0.0
-      - STRATEGY=lc
+      - HOST=${HOST}
+      - STRATEGY=${STRATEGY}
+      - SERVER_COUNT=${SERVER_COUNT}
     build: 
       context: .
       dockerfile: lb/Dockerfile

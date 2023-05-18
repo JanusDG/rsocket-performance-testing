@@ -25,11 +25,11 @@ services:
       - lb-network
     command: >
       -f /mnt/locust/locust/locustfile.py
-      --master -H http://0.0.0.0:8089
-      --master-bind-host=0.0.0.0
+      --master -H http://${HOST}:8089
+      --master-bind-host=${HOST}
       --master-bind-port=5557
-      -u 6
-      -r 2
+      -u ${USER_COUNT}
+      -r ${SPAWN_RATE}
     # --autostart
   
   worker:

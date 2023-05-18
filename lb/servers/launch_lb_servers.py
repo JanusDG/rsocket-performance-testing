@@ -17,6 +17,9 @@ import random
 
 import os 
 
+import argparse, sys
+
+
 class Handler(BaseRequestHandler):
     def __init__(self, server_id: int, delay=timedelta(0)):
         self._delay = delay
@@ -68,4 +71,8 @@ async def run_all(server_count):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(run_all(5))
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--server_count")
+    args=parser.parse_args()
+    server_count = int(args.server_count)
+    asyncio.run(run_all(server_count))

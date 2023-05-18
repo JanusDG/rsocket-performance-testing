@@ -36,6 +36,7 @@ from strategies.least_connections import LoadBalancerLeastConections
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--strategy")
+parser.add_argument("--server_count")
 args=parser.parse_args()
 
 strategies = {
@@ -46,6 +47,7 @@ strategies = {
     "lc":LoadBalancerLeastConections,
 }
 strategy = strategies[args.strategy]
+server_count = int(args.server_count)
 
 class ChatClient:
     def __init__(self, rsocket: RSocketClient):
@@ -136,5 +138,5 @@ async def run_lb(server_count, host,port):
 if __name__ == "__main__":
     host = os.environ['HOST']
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(run_lb(5, host, 6565))
+    asyncio.run(run_lb(server_count, host, 6565))
 
