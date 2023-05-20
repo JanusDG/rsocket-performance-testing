@@ -16,6 +16,9 @@ services:
     ports:
      - "8089:8089"
     #  - "6565:6565"
+    environment:
+      - PACKAGE_SIZE=${PACKAGE_SIZE}
+      - LOAD_SIZE=${LOAD_SIZE}
     external_links:
       - lb:lb
     volumes:
@@ -47,6 +50,9 @@ services:
       - /home/janus/personal/UCU/BachelorDegree/rsocket-performance-testing/:/locust/
     # ports:
     #   - "5557:5557"
+    environment:
+      - PACKAGE_SIZE=${PACKAGE_SIZE}
+      - LOAD_SIZE=${LOAD_SIZE}
     external_links:
       - lb:lb
     links:

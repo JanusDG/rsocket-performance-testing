@@ -18,7 +18,22 @@ import random
 import os 
 
 import argparse, sys
+from worktypes import work_sleep, work_json, work_factorization
 
+
+parser=argparse.ArgumentParser()
+parser.add_argument("--server_count")
+parser.add_argument("--port")
+parser.add_argument("--work_type")
+args=parser.parse_args()
+
+
+worktypes = {
+    "s":work_sleep,
+    "j":work_json,
+    "f":work_factorization,
+}
+worktype=worktypes[args.work_type]
 
 class Handler(BaseRequestHandler):
     def __init__(self, server_id: int, delay=timedelta(0)):
@@ -27,13 +42,16 @@ class Handler(BaseRequestHandler):
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
         start_time = time.monotonic()
         message = utf8_decode(payload.data)
-        logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request {message}")
+        logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request {message[:10]}")
         
         # simulate work
-        time.sleep(random.randint(1,3000)/1000)
+        # m = int(message[:message.index(":")])
+        # worktype(m)
+        time.sleep(random.randint(1*1000,3*1000)/1000)
+
 
         response_time = int((time.monotonic() - start_time) * 1000)
-        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} (:{self._server_id+6566}) processed {message}'),
+        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} (:{self._server_id+6566}) processed {message[:10]}'),
                                      metadata=ensure_bytes(str(response_time))))
 
 
@@ -71,10 +89,7 @@ async def run_all(host,server_count):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     host = os.environ['HOST']
-    parser=argparse.ArgumentParser()
-    parser.add_argument("--server_count")
-    parser.add_argument("--port")
-    args=parser.parse_args()
+    
     if args.port is None:
         server_count = int(args.server_count)
         asyncio.run(run_all(host, server_count))

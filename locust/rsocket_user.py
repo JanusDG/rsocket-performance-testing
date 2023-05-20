@@ -13,7 +13,8 @@ from rsocket.frame_helpers import ensure_bytes
 from locust import User
 
 from chat_server import HandlerFactory, Handler
-
+import string
+import os
 import random
 
 class ConnectionServerWrapper:
@@ -49,7 +50,10 @@ class RsocketUser(User):
         start_time = time.monotonic()
 
         async with RSocketClient(single_transport_provider(TransportTCP(*connection))) as client:
-            message = random.randint(1,10**8)
+            package_size = os.environ['PACKAGE_SIZE']
+            load_size = os.environ['LOAD_SIZE']
+            message = load_size + ":" + ''.join(random.choices(string.ascii_letters + string.digits, k=package_size//4))
+            
             logging.info(f"sending req_resp {message}")
             response = await client.request_response(Payload(ensure_bytes(f'req_resp {message}')))
             response_time = int((time.monotonic() - start_time) * 1000)
