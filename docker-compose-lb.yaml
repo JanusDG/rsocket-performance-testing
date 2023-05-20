@@ -3,6 +3,8 @@ version: '3'
 networks:
   lb-network:
     name: lb-network
+  lb-locust-network:
+    name: lb-locust-network
 
 services:
   lb:
@@ -10,7 +12,8 @@ services:
     environment:
       - HOST=${HOST}
       - STRATEGY=${STRATEGY}
-      - SERVER_COUNT=${SERVER_COUNT}
+      - NUM_SERVERS=${NUM_SERVERS}
+      - SERVERS_ADDRESSES=${SERVERS_ADDRESSES}
     build: 
       context: .
       dockerfile: lb/Dockerfile
@@ -21,4 +24,74 @@ services:
       - 6565
     networks:
       - lb-network
+      - lb-locust-network
+    depends_on:
+      - server1
+      - server2
+      - server3
+    command: >
+      python3 
+      /build/lb/launch_lb.py 
+      --strategy=$STRATEGY 
+      --server_count=$NUM_SERVERS 
+
+  
+  server1:
+    image: server
+    build: 
+      context: .
+      dockerfile: lb/servers/Dockerfile
+    environment:
+      - HOST=${HOST}
+      - SERVER_PORT=${SERVER_PORT}
+    networks:
+      - lb-network
+    ports:
+      - "6566:6566"
+    command: >
+      python3
+      lb/servers/launch_lb_servers.py
+      --port=$SERVER_PORT
+  
+  server2:
+    image: server
+    build: 
+      context: .
+      dockerfile: lb/servers/Dockerfile
+    environment:
+      - HOST=${HOST}
+      - SERVER_PORT=${SERVER_PORT}
+    networks:
+      - lb-network
+    ports:
+      - "6567:6566"
+    command: >
+      python3
+      lb/servers/launch_lb_servers.py
+      --port=$SERVER_PORT
+  
+  server3:
+    image: server
+    build: 
+      context: .
+      dockerfile: lb/servers/Dockerfile
+    environment:
+      - HOST=${HOST}
+      - SERVER_PORT=${SERVER_PORT}
+    networks:
+      - lb-network
+    # ports:
+    #   - "6568:6566"
+    command: >
+      python3
+      lb/servers/launch_lb_servers.py
+      --port=$SERVER_PORT
+    # bash
+    # ind.sh 
+    # &&
+  
+  # server:
+  #   image: imageName
+  #   deploy:
+  #     mode: replicated
 

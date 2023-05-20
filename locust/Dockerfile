@@ -12,6 +12,6 @@ RUN pip3 install -r requirements.txt
 
 
 COPY . .
-# EXPOSE 6565
+EXPOSE 8089
 
 # CMD ["./start_lb.sh"]

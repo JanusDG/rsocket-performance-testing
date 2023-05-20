@@ -85,16 +85,22 @@ class LoadBalancerHandler(BaseRequestHandler):
         logging.info(f"{utf8_decode(response.data)} in {utf8_decode(response.metadata)}ms")
         return create_future(Payload(ensure_bytes(f'{utf8_decode(response.data)}')))
 
-async def create_lb_strategy(server_count, stack, host):
+async def create_lb_strategy(sa,server_count, stack, host):
     clients = []
-    for i in range(server_count):
-        try:
-            connection = await asyncio.open_connection(host, 6566 + i)
-        except ConnectionError:
-            reconnect_time = 1
-            logging.info(f"Unable to connect to client, reconnection in {reconnect_time} second(s)")
-            time.sleep(reconnect_time)
-            continue
+    reconection_count = 3
+    for address_port in sa:
+        address, port = address_port.split(":")
+        for i in range(reconection_count):
+            try:
+                connection = await asyncio.open_connection(address, port)
+                logging.info(f"Connected to client{address}:{port}")
+                break
+            except ConnectionError as cn:
+                logging.info(cn)
+                reconnect_time = 1
+                logging.info(f"Unable to connect to{address}:{port}, retry#{i+1} retrying in {reconnect_time} second(s)")
+                time.sleep(reconnect_time)
+                continue
         cl = await stack.enter_async_context(RSocketClient(single_transport_provider(TransportTCP(*connection))))
         client = ChatClient(cl)
         clients.append(client)
@@ -124,9 +130,9 @@ class HandlerFactory:
         # logging.info(f"handler")
         return handler
 
-async def run_lb(server_count, host,port):
+async def run_lb(sa,server_count, host,port):
     stack = AsyncExitStack()
-    lb_strategy = await create_lb_strategy(server_count, stack, host)
+    lb_strategy = await create_lb_strategy(sa, server_count, stack, host)
     def session(*connection):
         RSocketServer(TransportTCP(*connection), handler_factory=HandlerFactory(server_count, stack,lb_strategy, LoadBalancerHandler).factory)
 
@@ -137,6 +143,10 @@ async def run_lb(server_count, host,port):
 
 if __name__ == "__main__":
     host = os.environ['HOST']
+    servers_addresses = os.environ['SERVERS_ADDRESSES']
+    sa = servers_addresses.split(",")
+    # host = "server"
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(run_lb(server_count, host, 6565))
+    # logging.info(f"server count: {server_count}")
+    asyncio.run(run_lb(sa, len(sa), host, 6565))
 

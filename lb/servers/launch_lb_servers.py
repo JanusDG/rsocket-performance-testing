@@ -61,9 +61,8 @@ async def run_server(host, port):
         logging.info(f"started server on port {port}")
         await server.serve_forever()
 
-async def run_all(server_count):
+async def run_all(host,server_count):
     tasks = []
-    host = os.environ['HOST']
     for i in range(server_count):
         tasks.append(run_server(host, 6566+i))
     await asyncio.gather(*tasks)
@@ -71,8 +70,13 @@ async def run_all(server_count):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    host = os.environ['HOST']
     parser=argparse.ArgumentParser()
     parser.add_argument("--server_count")
+    parser.add_argument("--port")
     args=parser.parse_args()
-    server_count = int(args.server_count)
-    asyncio.run(run_all(server_count))
+    if args.port is None:
+        server_count = int(args.server_count)
+        asyncio.run(run_all(host, server_count))
+    else:
+        asyncio.run(run_server(host, int(args.port)))

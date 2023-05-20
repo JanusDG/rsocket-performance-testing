@@ -19,18 +19,24 @@ services:
     external_links:
       - lb:lb
     volumes:
-      - ./:/mnt/locust
+      - /home/janus/personal/UCU/BachelorDegree/rsocket-performance-testing/:/locust/
     networks:
       - locust-network
       - lb-network
     command: >
-      -f /mnt/locust/locust/locustfile.py
+      -f /locust/locust/locustfile.py
       --master -H http://${HOST}:8089
       --master-bind-host=${HOST}
       --master-bind-port=5557
-      -u ${USER_COUNT}
+      -u ${NUM_USERS}
       -r ${SPAWN_RATE}
-    # --autostart
+      -t ${RUN_TIME}
+      --csv /locust/results/${CSV_PREFIX}
+      --csv-full-history
+      --only-summary
+      --autostart
+      --autoquit 5
+    # --headless
   
   worker:
     image: locust
@@ -38,7 +44,7 @@ services:
       context: .
       dockerfile: locust/Dockerfile
     volumes:
-      - ./:/mnt/locust
+      - /home/janus/personal/UCU/BachelorDegree/rsocket-performance-testing/:/locust/
     # ports:
     #   - "5557:5557"
     external_links:
@@ -49,7 +55,7 @@ services:
       - locust-network
       - lb-network
     command: >
-      -f /mnt/locust/locust/locustfile.py
+      -f /locust/locust/locustfile.py
       --worker
       --master-host=master
     depends_on:
