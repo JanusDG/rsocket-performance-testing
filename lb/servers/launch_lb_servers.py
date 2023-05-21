@@ -25,6 +25,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--server_count")
 parser.add_argument("--port")
 parser.add_argument("--work_type")
+parser.add_argument("--variation_scale")
 args=parser.parse_args()
 
 
@@ -34,6 +35,7 @@ worktypes = {
     "f":work_factorization,
 }
 worktype=worktypes[args.work_type]
+variation_scale=args.variation_scale
 
 class Handler(BaseRequestHandler):
     def __init__(self, server_id: int, delay=timedelta(0)):
@@ -45,9 +47,9 @@ class Handler(BaseRequestHandler):
         logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request {message[:10]}")
         
         # simulate work
-        # m = int(message[:message.index(":")])
-        # worktype(m)
-        time.sleep(random.randint(1*1000,3*1000)/1000)
+        m = int(message[:message.index(":")])
+        worktype(m, int(variation_scale))
+        # time.sleep(random.randint(1*1000,3*1000)/1000)
 
 
         response_time = int((time.monotonic() - start_time) * 1000)

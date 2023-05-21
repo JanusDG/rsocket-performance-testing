@@ -50,12 +50,12 @@ class RsocketUser(User):
         start_time = time.monotonic()
 
         async with RSocketClient(single_transport_provider(TransportTCP(*connection))) as client:
-            package_size = os.environ['PACKAGE_SIZE']
+            package_size = int(os.environ['PACKAGE_SIZE'])
             load_size = os.environ['LOAD_SIZE']
             message = load_size + ":" + ''.join(random.choices(string.ascii_letters + string.digits, k=package_size//4))
             
-            logging.info(f"sending req_resp {message}")
-            response = await client.request_response(Payload(ensure_bytes(f'req_resp {message}')))
+            logging.info(f"sending req_resp {message[:10]}")
+            response = await client.request_response(Payload(ensure_bytes(f'{message}')))
             response_time = int((time.monotonic() - start_time) * 1000)
             logging.info(f"LB response: {utf8_decode(response.data)}")
             # logging.info(f"Response metadata: {utf8_decode(response.metadata)}")
