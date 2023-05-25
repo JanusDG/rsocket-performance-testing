@@ -83,6 +83,8 @@ class LoadBalancerHandler(BaseRequestHandler):
         # logging.info("server recieved request")
         response = await LoadBalancerRSocket(self.lb_strategy).request_response(payload)
         logging.info(f"{utf8_decode(response.data)} in {utf8_decode(response.metadata)}ms")
+        with open("results/lat_stats.csv", "a+") as file:
+            file.write(f"{utf8_decode(response.data)}, {utf8_decode(response.metadata)}\n")
         return create_future(Payload(ensure_bytes(f'{utf8_decode(response.data)}')))
 
 async def create_lb_strategy(sa,server_count, stack, host):
@@ -142,6 +144,8 @@ async def run_lb(sa,server_count, host,port):
     await stack.aclose()
 
 if __name__ == "__main__":
+    with open("results/lat_stats.csv", "w+") as file:
+        file.write("\n")
     host = os.environ['HOST']
     servers_addresses = os.environ['SERVERS_ADDRESSES']
     sa = servers_addresses.split(",")

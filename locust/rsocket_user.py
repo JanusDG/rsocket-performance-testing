@@ -36,6 +36,15 @@ class RsocketUser(User):
     def __init__(self, environment):
         super().__init__(environment)
         logging.basicConfig(level=logging.INFO)
+        if os.environ['VARIATION']=="1":
+            self.loads = [os.environ['LOAD_SIZE_SMALL'],
+            os.environ['LOAD_SIZE_MID'],
+            os.environ['LOAD_SIZE_BIG'],]
+            self.packages = [
+            os.environ['PACKAGE_SIZE_SMALL'],
+            os.environ['PACKAGE_SIZE_MID'],
+            os.environ['PACKAGE_SIZE_BIG'],
+            ]
     
     async def request_response(self, port):
         while True:
@@ -50,8 +59,12 @@ class RsocketUser(User):
         start_time = time.monotonic()
 
         async with RSocketClient(single_transport_provider(TransportTCP(*connection))) as client:
-            package_size = int(os.environ['PACKAGE_SIZE'])
-            load_size = os.environ['LOAD_SIZE']
+            if os.environ['VARIATION']=="1":
+                package_size = int(random.choice(self.packages))
+                load_size = random.choice(self.loads)
+            else:
+                package_size = int(os.environ['PACKAGE_SIZE'])
+                load_size = os.environ['LOAD_SIZE']
             message = load_size + ":" + ''.join(random.choices(string.ascii_letters + string.digits, k=package_size//4))
             
             logging.info(f"sending req_resp {message[:10]}")

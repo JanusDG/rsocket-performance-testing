@@ -19,6 +19,7 @@ services:
     environment:
       - PACKAGE_SIZE=${PACKAGE_SIZE}
       - LOAD_SIZE=${LOAD_SIZE}
+      - VARIATION=${VARIATION}
     external_links:
       - lb:lb
     volumes:
@@ -50,9 +51,12 @@ services:
       - /home/janus/personal/UCU/BachelorDegree/rsocket-performance-testing/:/locust/
     # ports:
     #   - "5557:5557"
-    environment:
-      - PACKAGE_SIZE=${PACKAGE_SIZE}
-      - LOAD_SIZE=${LOAD_SIZE}
+    # environment:
+    #   - PACKAGE_SIZE=${PACKAGE_SIZE}
+    #   - LOAD_SIZE=${LOAD_SIZE}
+    #   - VARIATION=${VARIATION}
+    env_file:
+      - .env
     external_links:
       - lb:lb
     links:

@@ -15,7 +15,6 @@ services:
       - NUM_SERVERS=${NUM_SERVERS}
       - SERVERS_ADDRESSES=${SERVERS_ADDRESSES}
       - WORK_TYPE=${WORK_TYPE}
-      - VARIATION_SCALE=${VARIATION_SCALE}
     build: 
       context: .
       dockerfile: lb/Dockerfile
@@ -27,6 +26,8 @@ services:
     networks:
       - lb-network
       - lb-locust-network
+    volumes:
+      - /home/${OS_USERNAME}/:/build/results/
     depends_on:
       - server1
       - server2
@@ -38,62 +39,65 @@ services:
       --server_count=$NUM_SERVERS 
 
   
-  server1:
-    image: server
-    build: 
-      context: .
-      dockerfile: lb/servers/Dockerfile
-    environment:
-      - HOST=${HOST}
-      - SERVER_PORT=${SERVER_PORT}
-    networks:
-      - lb-network
-    ports:
-      - "6566:6566"
-    command: >
-      python3
-      lb/servers/launch_lb_servers.py
-      --port=$SERVER_PORT
-      --work_type=$WORK_TYPE
-      --variation_scale=$VARIATION_SCALE
+  # server1:
+  #   image: server
+  #   build: 
+  #     context: .
+  #     dockerfile: lb/servers/Dockerfile
+  #   environment:
+  #     - HOST=${HOST}
+  #     - SERVER_PORT=${SERVER_PORT}
+  #     - IP=${IP}
+  #   networks:
+  #     - lb-network
+  #   ports:
+  #     - "6566:6566"
+  #   command: >
+  #     python3
+  #     lb/servers/launch_lb_servers.py
+  #     --port=$SERVER_PORT
+  #     --work_type=$WORK_TYPE
+  #     --ip=$IP
   
-  server2:
-    image: server
-    build: 
-      context: .
-      dockerfile: lb/servers/Dockerfile
-    environment:
-      - HOST=${HOST}
-      - SERVER_PORT=${SERVER_PORT}
-    networks:
-      - lb-network
-    ports:
-      - "6567:6566"
-    command: >
-      python3
-      lb/servers/launch_lb_servers.py
-      --port=$SERVER_PORT
-      --work_type=$WORK_TYPE
-      --variation_scale=$VARIATION_SCALE
+  # server2:
+  #   image: server
+  #   build: 
+  #     context: .
+  #     dockerfile: lb/servers/Dockerfile
+  #   environment:
+  #     - HOST=${HOST}
+  #     - SERVER_PORT=${SERVER_PORT}
+  #     - IP=${IP}
+  #   networks:
+  #     - lb-network
+  #   ports:
+  #     - "6567:6566"
+  #   command: >
+  #     python3
+  #     lb/servers/launch_lb_servers.py
+  #     --port=$SERVER_PORT
+  #     --work_type=$WORK_TYPE
+  #     --ip=$IP
   
-  server3:
-    image: server
-    build: 
-      context: .
-      dockerfile: lb/servers/Dockerfile
-    environment:
-      - HOST=${HOST}
-      - SERVER_PORT=${SERVER_PORT}
-    networks:
-      - lb-network
-    # ports:
-    #   - "6568:6566"
-    command: >
-      python3
-      lb/servers/launch_lb_servers.py
-      --port=$SERVER_PORT
-      --work_type=$WORK_TYPE
-      --variation_scale=$VARIATION_SCALE
+  # server3:
+  #   image: server
+  #   build: 
+  #     context: .
+  #     dockerfile: lb/servers/Dockerfile
+  #   environment:
+  #     - HOST=${HOST}
+  #     - SERVER_PORT=${SERVER_PORT}
+  #     - IP=${IP}
+  #   networks:
+  #     - lb-network
+  #   ports:
+  #     - "6568:6566"
+  #   command: >
+  #     python3
+  #     lb/servers/launch_lb_servers.py
+  #     --port=$SERVER_PORT
+  #     --work_type=$WORK_TYPE
+  #     --ip=$IP
     # bash
     # ind.sh 
     # &&

@@ -25,7 +25,8 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--server_count")
 parser.add_argument("--port")
 parser.add_argument("--work_type")
-parser.add_argument("--variation_scale")
+# parser.add_argument("--variation_scale")
+parser.add_argument("--ip")
 args=parser.parse_args()
 
 
@@ -35,7 +36,8 @@ worktypes = {
     "f":work_factorization,
 }
 worktype=worktypes[args.work_type]
-variation_scale=args.variation_scale
+# variation_scale=args.varisation_scale
+ip=args.ip
 
 class Handler(BaseRequestHandler):
     def __init__(self, server_id: int, delay=timedelta(0)):
@@ -44,16 +46,16 @@ class Handler(BaseRequestHandler):
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
         start_time = time.monotonic()
         message = utf8_decode(payload.data)
-        logging.info(f"server {self._server_id} (:{self._server_id+6566}) recieved request {message[:10]}")
+        logging.info(f"server {ip} (:{6566}) recieved request {message[:10]}")
         
         # simulate work
         m = int(message[:message.index(":")])
-        worktype(m, int(variation_scale))
+        worktype(m)
         # time.sleep(random.randint(1*1000,3*1000)/1000)
 
 
         response_time = int((time.monotonic() - start_time) * 1000)
-        return create_future(Payload(data=ensure_bytes(f'server {self._server_id} (:{self._server_id+6566}) processed {message[:10]}'),
+        return create_future(Payload(data=ensure_bytes(f'server {ip} (:{6566}) processed {message[:10]}'),
                                      metadata=ensure_bytes(str(response_time))))
 
 

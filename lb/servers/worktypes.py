@@ -4,19 +4,17 @@ import math
 import json
 import string
 
-def work_sleep(work_size:int, variation_scale:int):
+def work_sleep(message):
     """
     min_time, max_time - seconds
     """
-    work_size = random.randint(work_size*(1 - variation_scale/100),
-                               work_size*(1 + variation_scale/100))
     min_time = 1
-    max_time = int(work_size)
+    max_time = int(message)
     diff = 1000
     time.sleep(random.randint(min_time*diff,max_time*diff)/diff)
 
-def generate_random_data(work_size:int):
-    num_chars = work_size // 4
+def generate_random_data(message):
+    num_chars = message // 4
 
     data = {}
     for _ in range(num_chars // 10):
@@ -26,18 +24,14 @@ def generate_random_data(work_size:int):
 
     return data
 
-def work_json(work_size:int, variation_scale:int):
-    work_size = random.randint(work_size*(1 - variation_scale/100),
-                               work_size*(1 + variation_scale/100))
-    data = generate_random_data(int(work_size))
+def work_json(message):
+    data = generate_random_data(int(message))
     json_data = json.dumps(data)
     data = json.loads(json_data)
     return data
 
-def work_factorization(work_size:int, variation_scale:int):
-    work_size = random.randint(work_size*(1 - variation_scale/100),
-                               work_size*(1 + variation_scale/100))
-    number = int(work_size)
+def work_factorization(message):
+    number = int(message)
     def x (num):
         if num == 1:
             return num
