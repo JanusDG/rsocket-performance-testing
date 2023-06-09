@@ -20,6 +20,10 @@ services:
       - PACKAGE_SIZE=${PACKAGE_SIZE}
       - LOAD_SIZE=${LOAD_SIZE}
       - VARIATION=${VARIATION}
+      - LB_ADDRESS=${LB_ADDRESS}
+      - STRATEGY=${STRATEGY}
+      # - PS=${PS}
+      # - LS=${LS}
     external_links:
       - lb:lb
     volumes:
@@ -35,11 +39,12 @@ services:
       -u ${NUM_USERS}
       -r ${SPAWN_RATE}
       -t ${RUN_TIME}
-      --csv /locust/results/${CSV_PREFIX}
+      --csv /locust/results/${CSV_PREFIX}_${STRATEGY}_variation_rep${REPLICA}
       --csv-full-history
       --only-summary
       --autostart
       --autoquit 5
+    # --csv /locust/results/${CSV_PREFIX}_${STRATEGY}_${PACKAGE_SIZE}_${LOAD_SIZE}_rep${REPLICA}
     # --headless
   
   worker:

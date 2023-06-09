@@ -46,10 +46,11 @@ class RsocketUser(User):
             os.environ['PACKAGE_SIZE_BIG'],
             ]
     
-    async def request_response(self, port):
+    async def request_response(self, lb_address, port):
         while True:
             try:
-                connection = await asyncio.open_connection('lb', port)
+                logging.info(lb_address)
+                connection = await asyncio.open_connection(lb_address, port)
                 break
             except ConnectionError as e:
                 reconnect_time = 1

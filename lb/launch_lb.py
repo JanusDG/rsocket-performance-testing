@@ -32,6 +32,8 @@ import argparse, sys
 from strategies.weighted_round_robin import LoadBalancerWeightenedRoundRobin
 from strategies.dynamic_weighted_round_robin import LoadBalancerDynamicWeightenedRoundRobin
 from strategies.least_connections import LoadBalancerLeastConections
+import datetime
+from rsocket.frame_helpers import safe_len
 
 
 parser=argparse.ArgumentParser()
@@ -52,23 +54,23 @@ server_count = int(args.server_count)
 class ChatClient:
     def __init__(self, rsocket: RSocketClient):
         self._rsocket = rsocket
-        self._latancy_stack = deque(maxlen=3)
-        self._connection_count = 0
+        self._latancy_stack = deque([1,1,1],maxlen=3)
+        self.connection_count = 0
 
     async def request_response(self, request_payload: Payload):
-        self._connection_count += 1
+        self.connection_count += 1
         response = await self._rsocket.request_response(request_payload)
         request_time = utf8_decode(response.metadata)
         # logging.info(f"{request_time}")
         self._latancy_stack.append(int(request_time))
-        self._connection_count -= 1
+        self.connection_count -= 1
         return response
 
-    def connection_count(self):
-        return self._connection_count
+    # def connection_count(self):
+    #     return self.connection_count
 
     def avarage_server_latency(self):
-        return sum(self._latancy_stack)/len(self._latancy_stack)
+        return sum(self._latancy_stack)/max(1,len(self._latancy_stack))
 
 
 class LoadBalancerHandler(BaseRequestHandler):
@@ -81,10 +83,12 @@ class LoadBalancerHandler(BaseRequestHandler):
 
     async def request_response(self, payload: Payload) -> Awaitable[Payload]:
         # logging.info("server recieved request")
+        request = utf8_decode(payload.data)
+        request_load = request[:request.index(":")]
         response = await LoadBalancerRSocket(self.lb_strategy).request_response(payload)
         logging.info(f"{utf8_decode(response.data)} in {utf8_decode(response.metadata)}ms")
         with open("results/lat_stats.csv", "a+") as file:
-            file.write(f"{utf8_decode(response.data)}, {utf8_decode(response.metadata)}\n")
+            file.write(f"{str(datetime.datetime.now())},{args.strategy},{len(request)},{request_load},{utf8_decode(response.data)}, {utf8_decode(response.metadata)}\n")
         return create_future(Payload(ensure_bytes(f'{utf8_decode(response.data)}')))
 
 async def create_lb_strategy(sa,server_count, stack, host):
@@ -107,7 +111,10 @@ async def create_lb_strategy(sa,server_count, stack, host):
         client = ChatClient(cl)
         clients.append(client)
     # lb_strategy = strategy(pool=clients,weights=[random.randint(2,3)for i in range(len(clients))])
-    lb_strategy = strategy(pool=clients)
+    if args.strategy == "wrr":
+        lb_strategy = strategy(pool=clients, weights=[1,1,7])
+    else:
+        lb_strategy = strategy(pool=clients)
     return lb_strategy
 
 class HandlerFactory:

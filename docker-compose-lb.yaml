@@ -28,10 +28,10 @@ services:
       - lb-locust-network
     volumes:
       - /home/${OS_USERNAME}/:/build/results/
-    depends_on:
-      - server1
-      - server2
-      - server3
+    # depends_on:
+    #   - server1
+    #   - server2
+    #   - server3
     command: >
       python3 
       /build/lb/launch_lb.py 

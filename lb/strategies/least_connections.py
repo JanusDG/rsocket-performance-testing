@@ -19,7 +19,7 @@ class LoadBalancerLeastConections(LoadBalancerStrategy):
 
     def select(self) -> RSocket:
         # logging.info(f"{[x.connection_count() for x in self._pool]}")
-        return min(self._pool, key = lambda x: x.connection_count())
+        return min(self._pool, key = lambda x: x.connection_count)
 
     async def connect(self):
         if self._auto_connect:

@@ -14,6 +14,7 @@ from gevent.pool import Pool
 from gevent.pool import Group
 from rsocket_user import ConnectionServerWrapper
 import asyncio
+import os
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 def asyncio_if_event_loop(call, *args):
     try:
@@ -55,7 +56,8 @@ class ResponseRsocketUser(RsocketUser):
     def getResponse(self):
         # def x():
         call = self.request_response
-        future_response = asyncio_if_event_loop(call, 6565)
+        lb_address=os.environ["LB_ADDRESS"]
+        future_response = asyncio_if_event_loop(call,lb_address, 6565)
         if future_response is None:
             logging.info("Request failed")
             self.fire(0, 0, NotImplementedError)

@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  server:
+    image: server
+    build: 
+      context: .
+      dockerfile: lb/servers/Dockerfile
+    environment:
+      - HOST=${HOST}
+      - SERVER_PORT=${SERVER_PORT}
+    ports:
+      - "6566:6566"
+    command: >
+      python3
+      lb/servers/launch_lb_servers.py
+      --port=$SERVER_PORT
+      --work_type=$WORK_TYPE
+      --variation_scale=$VARIATION_SCALE
+
+
